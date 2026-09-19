@@ -226,6 +226,8 @@ export function useSendFlow(
   }
 
   const handlePaste = async (event: ClipboardEvent) => {
+    // 上传期间保持当前文件与进度一致，避免粘贴替换正在提交的内容。
+    if (isSubmitting.value) return
     const items = event.clipboardData?.items
     if (!items) return
 
@@ -236,11 +238,16 @@ export function useSendFlow(
         return
       }
 
-      selectedFile.value = file
-      if (!checkUpload()) return
+      if (!checkOpenUpload() || !checkFileSize(file) || !checkFileType(file)) return
+      if (!checkExpirationTime(expirationMethod.value, expirationValue.value)) return
 
       try {
-        fileHash.value = await calculateFileHash(file)
+        const hash = await calculateFileHash(file)
+        // 校验和处理成功后切换文件面板，保留文字草稿且不自动上传。
+        selectedFile.value = file
+        selectedFiles.value = []
+        fileHash.value = hash
+        sendType.value = 'file'
         alertStore.showAlert(
           t('send.messages.fileAddedFromClipboard', { filename: file.name }),
           'success'
