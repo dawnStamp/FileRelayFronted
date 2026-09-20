@@ -6,7 +6,10 @@ import type {
   DeliveryCode,
   DeliveryCodeFilters,
   DeliveryList,
+  DeliveryNotificationConfig,
+  DeliveryNotificationEvent,
   DeliverySession,
+  UpdateDeliveryNotificationConfig,
   UpdateDeliveryCode
 } from '@/types/delivery'
 
@@ -73,5 +76,37 @@ export const DeliveryService = {
   /** 批量接口由后端原子执行，前端只在成功后清空当前页选择。 */
   async batch(data: DeliveryBatchRequest) {
     await api.post('/admin/delivery/codes/batch', data)
+  },
+  /** 通知配置和普通系统配置分离，避免敏感输入被全局存储同步。 */
+  async getNotificationConfig() {
+    return detail(
+      await api.get<never, ApiResponse<DeliveryNotificationConfig>>(
+        '/admin/delivery/notifications/config'
+      )
+    )
+  },
+  async updateNotificationConfig(data: UpdateDeliveryNotificationConfig) {
+    return detail(
+      await api.put<never, ApiResponse<DeliveryNotificationConfig>>(
+        '/admin/delivery/notifications/config',
+        data
+      )
+    )
+  },
+  /** 测试使用已保存配置，避免把未保存的凭证发送到测试队列。 */
+  async testNotification(channel: 'email' | 'webhook') {
+    return detail(
+      await api.post<never, ApiResponse<{ message: string; event_id: string }>>(
+        '/admin/delivery/notifications/test',
+        { channel }
+      )
+    )
+  },
+  async listNotificationEvents() {
+    return detail(
+      await api.get<never, ApiResponse<DeliveryList<DeliveryNotificationEvent>>>(
+        '/admin/delivery/notifications/events'
+      )
+    )
   }
 }

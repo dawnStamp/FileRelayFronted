@@ -58,3 +58,44 @@ export interface DeliveryList<T> {
   items: T[]
   total: number
 }
+
+/** 收件通知配置仅由管理员接口返回，敏感字段始终使用空字符串脱敏。 */
+export interface DeliveryNotificationConfig {
+  email_enabled: boolean
+  smtp_host: string
+  smtp_port: number
+  smtp_security: 'starttls' | 'tls' | 'plain'
+  smtp_username: string
+  smtp_password: ''
+  smtp_password_set: boolean
+  email_from: string
+  email_to: string[]
+  webhook_enabled: boolean
+  webhook_url: string
+  webhook_secret: ''
+  webhook_secret_set: boolean
+}
+
+/** 保存时允许输入新凭证或明确请求清除，空凭证表示保持服务端现有值。 */
+export interface UpdateDeliveryNotificationConfig extends Omit<
+  DeliveryNotificationConfig,
+  'smtp_password' | 'webhook_secret' | 'smtp_password_set' | 'webhook_secret_set'
+> {
+  smtp_password: string
+  webhook_secret: string
+  clear_smtp_password?: boolean
+  clear_webhook_secret?: boolean
+}
+
+/** 最近通知事件仅展示投递状态，避免在管理端泄漏消息内容。 */
+export interface DeliveryNotificationEvent {
+  id: number
+  event_id: string
+  channel: 'email' | 'webhook'
+  status: 'pending' | 'sending' | 'sent' | 'failed' | 'cancelled'
+  attempts: number
+  last_error: string
+  created_at: string
+  sent_at: string | null
+  is_test: boolean
+}

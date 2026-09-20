@@ -3,6 +3,7 @@ import { inject, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RefreshCwIcon, SaveIcon } from 'lucide-vue-next'
 import BaseButton from '@/components/common/BaseButton.vue'
+import NotificationSettings from '@/components/delivery/NotificationSettings.vue'
 import SettingNumberInput from '@/components/common/SettingNumberInput.vue'
 import SettingSwitch from '@/components/common/SettingSwitch.vue'
 import { useSystemConfig } from '@/composables'
@@ -853,6 +854,8 @@ onMounted(() => {
         </div>
       </section>
     </div>
+    <!-- 收件通知独立保存，避免 SMTP/Webhook 密钥落入全局系统配置。 -->
+    <NotificationSettings />
   </div>
 </template>
 <style scoped>

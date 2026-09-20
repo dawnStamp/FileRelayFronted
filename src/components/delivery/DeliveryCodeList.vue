@@ -197,8 +197,9 @@ const sortOptions = computed(() => [
           </div>
         </td>
         <td>
-          <BaseButton size="sm" variant="outline" @click="copyListedCode(item)">
-            <CopyIcon class="mr-1 h-4 w-4" />{{ t('delivery.viewCode') }}
+          <!-- 保持口令按钮单行、图标固定尺寸；窄屏由表格横向滚动，不能把 SVG 压扁。 -->
+          <BaseButton size="sm" variant="outline" class="whitespace-nowrap" @click="copyListedCode(item)">
+            <CopyIcon class="mr-1 h-4 w-4 shrink-0" />{{ t('delivery.viewCode') }}
           </BaseButton>
         </td>
         <td class="whitespace-nowrap">{{ new Date(item.expires_at).toLocaleString() }}</td>
