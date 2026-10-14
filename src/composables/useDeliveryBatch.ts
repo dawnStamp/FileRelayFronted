@@ -16,7 +16,7 @@ export function useDeliveryBatch(
   // 选择范围只限当前页；切页、刷新和筛选后均会清空，避免误操作其他页。
   const selectedIds = ref<Set<number>>(new Set())
   const showBatchEdit = ref(false)
-  const batchForm = reactive({ expires_at: '', max_uploads: null as number | null })
+  const batchForm = reactive({ mode: 'keep', expires_at: '', max_uploads: null as number | null })
   const selectedCount = computed(() => selectedIds.value.size)
   const hasSelection = computed(() => selectedCount.value > 0)
   const isAllCurrentPageSelected = computed(
@@ -42,11 +42,22 @@ export function useDeliveryBatch(
     if (acting.value || !hasSelection.value) return
     const payload: DeliveryBatchRequest = { ids: Array.from(selectedIds.value), action }
     if (action === 'update') {
-      if (!batchForm.expires_at && batchForm.max_uploads === null) {
+      // 保持原模式、转永久、转有限三种意图分开，避免空白字段误清空授权。
+      const permanent = batchForm.mode === 'permanent'
+      if (batchForm.mode !== 'keep') payload.is_permanent = permanent
+      if (!permanent && !batchForm.expires_at && batchForm.max_uploads === null) {
         alerts.showAlert(t('delivery.batchNoFields'), 'warning')
         return
       }
-      if (batchForm.expires_at) {
+      if (
+        !permanent &&
+        batchForm.mode === 'limited' &&
+        (!batchForm.expires_at || batchForm.max_uploads === null)
+      ) {
+        alerts.showAlert(t('delivery.limitedRequired'), 'warning')
+        return
+      }
+      if (!permanent && batchForm.expires_at) {
         const expiresAt = new Date(batchForm.expires_at)
         if (!Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
           alerts.showAlert(t('delivery.expiredInput'), 'error')
@@ -54,7 +65,7 @@ export function useDeliveryBatch(
         }
         payload.expires_at = expiresAt.toISOString()
       }
-      if (batchForm.max_uploads !== null) {
+      if (!permanent && batchForm.max_uploads !== null) {
         if (
           !Number.isInteger(batchForm.max_uploads) ||
           batchForm.max_uploads < 1 ||
@@ -82,7 +93,7 @@ export function useDeliveryBatch(
 
   function openBatchEdit() {
     if (hasSelection.value) {
-      Object.assign(batchForm, { expires_at: '', max_uploads: null })
+      Object.assign(batchForm, { mode: 'keep', expires_at: '', max_uploads: null })
       showBatchEdit.value = true
     }
   }

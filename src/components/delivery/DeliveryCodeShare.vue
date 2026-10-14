@@ -35,11 +35,18 @@ const linkInput = ref<HTMLInputElement | null>(null)
   >
     <div v-if="createdItem" class="theme-control mb-5 rounded-2xl p-4">
       <p class="theme-text-strong break-words font-semibold">{{ createdItem.name }}</p>
+      <!-- 分享结果区分永久授权与有限期限。 -->
       <div class="theme-text-muted mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-        <span
-          >{{ t('delivery.expires') }} {{ new Date(createdItem.expires_at).toLocaleString() }}</span
-        >
-        <span>{{ t('delivery.remaining', { count: createdItem.remaining }) }}</span>
+        <span>{{
+          createdItem.expires_at
+            ? `${t('delivery.expires')} ${new Date(createdItem.expires_at).toLocaleString()}`
+            : t('delivery.permanent')
+        }}</span>
+        <span>{{
+          createdItem.remaining === null
+            ? t('delivery.unlimited')
+            : t('delivery.remaining', { count: createdItem.remaining })
+        }}</span>
       </div>
     </div>
     <div class="grid gap-5 sm:grid-cols-2">

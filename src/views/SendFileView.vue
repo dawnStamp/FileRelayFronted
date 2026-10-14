@@ -33,13 +33,23 @@
             v-if="deliverySession"
             class="theme-text-muted mb-5 flex items-center justify-between text-xs"
           >
-            <span>{{ deliverySession.name }} · {{ t('delivery.remaining', { count: deliverySession.remaining }) }}</span>
+            <!-- 永久授权不显示会递减的剩余次数。 -->
+            <span
+              >{{ deliverySession.name }} ·
+              {{
+                deliverySession.remaining === null
+                  ? t('delivery.permanentOption')
+                  : t('delivery.remaining', { count: deliverySession.remaining })
+              }}</span
+            >
             <button
               type="button"
               :disabled="isSubmitting"
               class="underline disabled:opacity-50"
               @click="emit('changeDelivery')"
-            >{{ t('delivery.change') }}</button>
+            >
+              {{ t('delivery.change') }}
+            </button>
           </div>
           <form @submit.prevent="handleSubmit" class="space-y-6 sm:space-y-8">
             <SendTypeSelector :selected-type="sendType" @update:selected-type="sendType = $event" />
@@ -170,7 +180,10 @@ import SentRecordList from '@/components/common/SentRecordList.vue'
 import SentRecordDetailModal from '@/components/common/SentRecordDetailModal.vue'
 import { useInjectedDarkMode, useSendFlow } from '@/composables'
 
-const props = defineProps<{ deliverySession?: DeliverySession; ensureDeliveryToken?: () => Promise<string> }>()
+const props = defineProps<{
+  deliverySession?: DeliverySession
+  ensureDeliveryToken?: () => Promise<string>
+}>()
 const emit = defineEmits<{ changeDelivery: []; deliverySuccess: [] }>()
 const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()

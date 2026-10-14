@@ -95,7 +95,19 @@ const { t } = useI18n()
     <p class="theme-text-muted mb-4 text-sm">
       {{ t('delivery.batchEditHint', { count: selectedCount }) }}
     </p>
-    <div class="grid gap-4 sm:grid-cols-2">
+    <!-- 默认保留模式；永久转换不要求填写隐藏的期限或次数。 -->
+    <label class="delivery-label mb-4">
+      {{ t('delivery.authorizationMode') }}
+      <select v-model="batchForm.mode" class="delivery-input">
+        <option value="keep">{{ t('delivery.keepMode') }}</option>
+        <option value="permanent">{{ t('delivery.permanentOption') }}</option>
+        <option value="limited">{{ t('delivery.limited') }}</option>
+      </select>
+    </label>
+    <p v-if="batchForm.mode === 'permanent'" class="theme-text-muted text-sm">
+      {{ t('delivery.permanentHint') }}
+    </p>
+    <div v-else class="grid gap-4 sm:grid-cols-2">
       <label class="delivery-label"
         >{{ t('delivery.expiresLocal')
         }}<input

@@ -81,7 +81,9 @@ const sortOptions = computed(() => [
     <div class="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
       <label class="relative block min-w-0">
         <span class="sr-only">{{ t('delivery.searchPlaceholder') }}</span>
-        <SearchIcon class="theme-text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+        <SearchIcon
+          class="theme-text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+        />
         <input
           v-model="filters.keyword"
           class="delivery-input !mt-0 !pl-10"
@@ -90,7 +92,8 @@ const sortOptions = computed(() => [
         />
       </label>
       <BaseButton class="h-11" :loading="loading" @click="search"
-        ><template #icon><SearchIcon class="mr-2 h-4 w-4" /></template>{{ t('common.search') }}</BaseButton
+        ><template #icon><SearchIcon class="mr-2 h-4 w-4" /></template
+        >{{ t('common.search') }}</BaseButton
       >
     </div>
     <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -201,7 +204,12 @@ const sortOptions = computed(() => [
             <CopyIcon class="mr-1 h-4 w-4" />{{ t('delivery.viewCode') }}
           </BaseButton>
         </td>
-        <td class="whitespace-nowrap">{{ new Date(item.expires_at).toLocaleString() }}</td>
+        <!-- 永久码使用明确文案，已用和上传中统计继续展示。 -->
+        <td class="whitespace-nowrap">
+          {{
+            item.expires_at ? new Date(item.expires_at).toLocaleString() : t('delivery.permanent')
+          }}
+        </td>
         <td>
           <span
             class="inline-block whitespace-nowrap rounded-lg px-2 py-1 text-xs"
@@ -214,7 +222,8 @@ const sortOptions = computed(() => [
           >
         </td>
         <td class="whitespace-nowrap tabular-nums">
-          {{ item.used_count }} / {{ item.reserved_count }} / {{ item.max_uploads }}
+          {{ item.used_count }} / {{ item.reserved_count }} /
+          {{ item.max_uploads ?? t('delivery.unlimited') }}
         </td>
         <td>
           <!-- 同一行操作保持并排，窄屏由表格容器横向滚动，避免按钮挤压错行。 -->
@@ -240,7 +249,8 @@ const sortOptions = computed(() => [
               variant="danger"
               :disabled="acting"
               @click="pendingDelete = { kind: 'code', id: item.id, name: item.name }"
-            >{{ t('common.delete') }}</BaseButton>
+              >{{ t('common.delete') }}</BaseButton
+            >
           </div>
         </td>
       </tr>

@@ -4,11 +4,13 @@ export interface DeliveryCode {
   code?: string | null
   id: number
   name: string
-  expires_at: string
-  max_uploads: number
+  /** 永久模式同时取消时间和次数上限，仍由管理员控制启停。 */
+  is_permanent: boolean
+  expires_at: string | null
+  max_uploads: number | null
   used_count: number
   reserved_count: number
-  remaining: number
+  remaining: number | null
   enabled: boolean
   deleted: boolean
   status: string
@@ -21,14 +23,18 @@ export interface DeliveryCode {
 export interface DeliverySession {
   token: string
   name: string
-  remaining: number
-  expires_at: string
+  /** 永久模式同时取消时间和次数上限，仍由管理员控制启停。 */
+  is_permanent: boolean
+  remaining: number | null
+  expires_at: string | null
   expires_in: number
 }
 export interface CreateDeliveryCode {
   name: string
+  /** 永久模式同时取消时间和次数上限，仍由管理员控制启停。 */
+  is_permanent: boolean
   code: string
-  expires_at: string
+  expires_at: string | null
   max_uploads: number
   note?: string
   tags?: string[]
@@ -51,7 +57,8 @@ export interface UpdateDeliveryCode extends Partial<Omit<CreateDeliveryCode, 'co
 export interface DeliveryBatchRequest {
   ids: number[]
   action: 'enable' | 'disable' | 'delete' | 'update'
-  expires_at?: string
+  is_permanent?: boolean
+  expires_at?: string | null
   max_uploads?: number
 }
 export interface DeliveryList<T> {

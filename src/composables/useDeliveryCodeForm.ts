@@ -30,6 +30,7 @@ export function useDeliveryCodeForm(
   // 寄件始终复用系统存储和目录，表单只维护授权与管理信息。
   const form = reactive({
     name: '',
+    is_permanent: false,
     code: '',
     expires_at: '',
     max_uploads: 1,
@@ -42,6 +43,7 @@ export function useDeliveryCodeForm(
     expiry.setMinutes(expiry.getMinutes() - expiry.getTimezoneOffset())
     Object.assign(form, {
       name: '',
+      is_permanent: false,
       code: '',
       expires_at: expiry.toISOString().slice(0, 16),
       max_uploads: 1,
@@ -55,12 +57,17 @@ export function useDeliveryCodeForm(
     if (creating.value) return
     const date = new Date(form.expires_at)
     // datetime-local 精度到秒，比较时也忽略服务端时间的毫秒，避免未编辑却误传期限。
-    const originalExpiry = editing.value ? new Date(editing.value.expires_at) : null
+    const originalExpiry = editing.value?.expires_at ? new Date(editing.value.expires_at) : null
     if (originalExpiry)
       originalExpiry.setMinutes(originalExpiry.getMinutes() - originalExpiry.getTimezoneOffset())
     const expiryChanged =
-      !editing.value || form.expires_at !== originalExpiry?.toISOString().slice(0, 19)
-    if (!Number.isFinite(date.getTime()) || (expiryChanged && date.getTime() <= Date.now())) {
+      !editing.value ||
+      form.is_permanent !== editing.value.is_permanent ||
+      form.expires_at !== originalExpiry?.toISOString().slice(0, 19)
+    if (
+      !form.is_permanent &&
+      (!Number.isFinite(date.getTime()) || (expiryChanged && date.getTime() <= Date.now()))
+    ) {
       alerts.showAlert(t('delivery.expiredInput'), 'error')
       return
     }
@@ -70,9 +77,10 @@ export function useDeliveryCodeForm(
       return
     }
     if (
-      !Number.isInteger(form.max_uploads) ||
-      form.max_uploads < minimumUploads.value ||
-      form.max_uploads > 100000
+      !form.is_permanent &&
+      (!Number.isInteger(form.max_uploads) ||
+        form.max_uploads < minimumUploads.value ||
+        form.max_uploads > 100000)
     ) {
       alerts.showAlert(t('delivery.invalidLimit', { count: minimumUploads.value }), 'error')
       return
@@ -82,12 +90,14 @@ export function useDeliveryCodeForm(
       if (editing.value) {
         const payload: UpdateDeliveryCode = {
           name: form.name,
-          max_uploads: form.max_uploads,
+          is_permanent: form.is_permanent,
+          ...(form.is_permanent ? {} : { max_uploads: form.max_uploads }),
           note: form.note,
           tags: parseMetadataTags(form.tagsText)
         }
         // 未改日期不传给后端，过期记录也可以只维护备注；改动时才提交新时间。
-        if (expiryChanged) payload.expires_at = date.toISOString()
+        // 永久模式不提交隐藏字段；切回有限模式才提交完整期限和次数。
+        if (expiryChanged && !form.is_permanent) payload.expires_at = date.toISOString()
         if (codeChanged && form.code.trim()) payload.code = form.code.trim()
         await DeliveryService.update(editing.value.id, payload)
         showCreate.value = false
@@ -99,8 +109,9 @@ export function useDeliveryCodeForm(
       const result = await DeliveryService.create({
         name: form.name,
         code: form.code.trim(),
-        expires_at: date.toISOString(),
-        max_uploads: form.max_uploads,
+        is_permanent: form.is_permanent,
+        expires_at: form.is_permanent ? null : date.toISOString(),
+        max_uploads: form.is_permanent ? 1 : form.max_uploads,
         note: form.note,
         tags: parseMetadataTags(form.tagsText)
       })
@@ -136,13 +147,15 @@ export function useDeliveryCodeForm(
 
   function openEdit(item: DeliveryCode) {
     editing.value = item
-    const expiry = new Date(item.expires_at)
+    // 永久码没有日期，切回有限模式时预填七天，交由管理员确认。
+    const expiry = item.expires_at ? new Date(item.expires_at) : new Date(Date.now() + 7 * 86400000)
     expiry.setMinutes(expiry.getMinutes() - expiry.getTimezoneOffset())
     Object.assign(form, {
       name: item.name,
+      is_permanent: item.is_permanent,
       code: '',
       expires_at: expiry.toISOString().slice(0, 19),
-      max_uploads: item.max_uploads,
+      max_uploads: item.max_uploads ?? Math.max(1, item.used_count + item.reserved_count),
       note: item.note || '',
       tagsText: (item.tags || []).join(', ')
     })

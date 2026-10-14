@@ -61,7 +61,15 @@ const { t } = useI18n()
       <p class="theme-text-muted text-xs leading-5 sm:col-span-2">
         {{ t('delivery.systemStorageHint') }}
       </p>
-      <label class="delivery-label"
+      <!-- 一个选项同时取消时间和次数限制，避免用户误以为永久码仍会耗尽。 -->
+      <label class="delivery-label sm:col-span-2">
+        <span class="flex items-center gap-2">
+          <input v-model="form.is_permanent" type="checkbox" class="h-4 w-4" />
+          {{ t('delivery.permanentOption') }}
+        </span>
+        <span class="theme-text-muted text-xs">{{ t('delivery.permanentHint') }}</span>
+      </label>
+      <label v-if="!form.is_permanent" class="delivery-label"
         >{{ t('delivery.expiresLocal')
         }}<input
           v-model="form.expires_at"
@@ -88,7 +96,7 @@ const { t } = useI18n()
           :placeholder="t('delivery.tagsPlaceholder')"
         /><span class="theme-text-muted mt-1 text-xs">{{ t('delivery.tagsHint') }}</span></label
       >
-      <label class="delivery-label"
+      <label v-if="!form.is_permanent" class="delivery-label"
         >{{ t('delivery.maxUploads')
         }}<input
           v-model.number="form.max_uploads"

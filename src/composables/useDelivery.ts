@@ -69,7 +69,8 @@ export function useDelivery() {
   async function uploaded() {
     const current = session.value
     if (!current) return
-    current.remaining = Math.max(0, current.remaining - 1)
+    // null 表示不限次数，成功上传后仍保留无限语义。
+    if (current.remaining !== null) current.remaining = Math.max(0, current.remaining - 1)
     try {
       // 上传中续期的 remaining 已扣除了预占，成功后向服务端对账，避免再次扣减显示值。
       if (refreshing) await refreshing
