@@ -1,6 +1,7 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+  <div :class="embedded ? 'min-w-0' : 'p-6'">
+    <!-- 嵌入寄件管理时仅复用文件表格和操作弹窗，隐藏全局文件概览。 -->
+    <div v-if="!embedded" class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <h2 class="text-2xl font-bold" :class="[primaryTextClass]">
           {{ t('fileManage.title') }}
@@ -30,7 +31,7 @@
       </div>
     </div>
 
-    <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div v-if="!embedded" class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -51,7 +52,7 @@
       </div>
     </div>
 
-    <section class="mb-6 rounded-lg border p-4" :class="[panelClass]">
+    <section v-if="!embedded" class="mb-6 rounded-lg border p-4" :class="[panelClass]">
       <div class="grid gap-4">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label class="min-w-0 flex-1">
@@ -241,7 +242,7 @@
     </section>
 
     <section
-      v-if="tableData.length > 0"
+      v-if="tableData.length > 0 && (!embedded || hasSelectedFiles)"
       class="mb-4 flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       :class="[panelClass]"
     >
@@ -388,7 +389,7 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="font-medium select-all" :class="[primaryTextClass]">
-                {{ file.code }}
+                {{ file.is_private ? t('delivery.privateLegacy') : file.code }}
               </span>
             </td>
             <td class="px-6 py-4">
@@ -631,7 +632,9 @@
           </div>
         </div>
 
+        <!-- 私有收件文件只允许管理员下载，不显示可公开访问的取件信息。 -->
         <div
+          v-if="!selectedFileDetail.is_private"
           class="rounded-lg border px-4 py-3"
           :class="[isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-50']"
         >
@@ -978,6 +981,7 @@
 
       <div class="grid gap-6">
         <FileEditField
+          v-if="!tableData.find((item) => item.id === editForm.id)?.is_private"
           v-model="editForm.code"
           :label="t('fileManage.form.code')"
           :placeholder="t('fileManage.form.codePlaceholder')"
@@ -1218,6 +1222,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import { useAdminFiles, useInjectedDarkMode } from '@/composables'
 import { formatTimestamp } from '@/utils/common'
 
+const props = defineProps<{ embedded?: boolean; deliveryId?: number }>()
 const { t } = useI18n()
 const isDarkMode = useInjectedDarkMode()
 const route = useRoute()
@@ -1313,7 +1318,7 @@ const {
   updateDetailMetadata,
   toggleCurrentPageSelection,
   toggleFileSelection
-} = useAdminFiles()
+} = useAdminFiles({ getDeliveryId: () => props.deliveryId })
 
 const primaryTextClass = computed(() => (isDarkMode.value ? 'text-white' : 'text-zinc-950'))
 const mutedTextClass = computed(() => (isDarkMode.value ? 'text-zinc-400' : 'text-zinc-500'))
@@ -1538,6 +1543,7 @@ const healthFilterValues: AdminFileHealthFilter[] = [
 ]
 
 const getRouteHealthFilter = (): AdminFileHealthFilter => {
+  if (props.embedded) return 'all'
   const health = route.query.health
   if (typeof health === 'string' && healthFilterValues.includes(health as AdminFileHealthFilter)) {
     return health as AdminFileHealthFilter
@@ -1546,6 +1552,7 @@ const getRouteHealthFilter = (): AdminFileHealthFilter => {
 }
 
 const syncHealthFilterQuery = async (health: AdminFileHealthFilter) => {
+  if (props.embedded) return
   const query = { ...route.query }
   if (health === 'all') {
     delete query.health
@@ -1727,6 +1734,7 @@ const getTimelineDotClass = (severity: AdminFileInsightSeverity) => {
 watch(
   () => route.query.health,
   async () => {
+    if (props.embedded) return
     const health = getRouteHealthFilter()
     if (params.value.health === health) return
     await setHealthFilter(health)
@@ -1735,7 +1743,7 @@ watch(
 
 onMounted(() => {
   params.value.health = getRouteHealthFilter()
-  void loadViewPresets()
+  if (!props.embedded) void loadViewPresets()
   void loadFiles()
 })
 </script>

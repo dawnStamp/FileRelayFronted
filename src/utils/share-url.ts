@@ -36,3 +36,8 @@ export function buildSentRecordQrValue(record: { retrieveCode: string }): string
 export function buildWgetCommand(retrieveCode: string, fileName: string): string {
   return `wget ${buildAbsoluteUrl(`/share/select?code=${retrieveCode}`)} -O "${fileName}"`
 }
+
+/** 寄件口令使用 Hash 路由，避免出现在服务端请求路径中。 */
+export function buildDeliveryUrl(code: string): string {
+  return `${window.location.origin}${import.meta.env.BASE_URL}#/delivery?code=${encodeURIComponent(code)}`
+}

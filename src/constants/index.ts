@@ -66,6 +66,9 @@ export const TIME_CONSTANTS = {
 export const ROUTES = {
   HOME: '/',
   SEND: '/send',
+  // 2024 主题寄件入口与后台管理入口。
+  DELIVERY: '/delivery',
+  DELIVERY_MANAGE: '/admin/delivery',
   ADMIN: '/admin',
   LOGIN: '/login',
   DASHBOARD: '/admin/dashboard',
@@ -77,6 +80,8 @@ export const ROUTES = {
 export const ROUTE_NAMES = {
   RETRIEVE: 'Retrieve',
   SEND: 'Send',
+  DELIVERY: 'Delivery',
+  DELIVERY_MANAGE: 'DeliveryManage',
   ADMIN: 'Manage',
   LOGIN: 'Login',
   DASHBOARD: 'Dashboard',

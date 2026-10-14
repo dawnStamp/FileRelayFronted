@@ -19,7 +19,7 @@
 
         <div class="px-5 pb-7 pt-8 sm:px-8 sm:pb-10 sm:pt-12">
           <PageHeader
-            :title="t('send.title')"
+            :title="t(deliverySession ? 'delivery.title' : 'send.title')"
             :subtitle="
               sendType === 'file'
                 ? t('send.uploadArea.placeholder')
@@ -28,6 +28,29 @@
             mode="send"
             @title-click="toRetrieve"
           />
+          <!-- 验证后的寄件会话只覆盖本次上传的限制与授权。 -->
+          <div
+            v-if="deliverySession"
+            class="theme-text-muted mb-5 flex items-center justify-between text-xs"
+          >
+            <!-- 永久授权不显示会递减的剩余次数。 -->
+            <span
+              >{{ deliverySession.name }} ·
+              {{
+                deliverySession.remaining === null
+                  ? t('delivery.permanentOption')
+                  : t('delivery.remaining', { count: deliverySession.remaining })
+              }}</span
+            >
+            <button
+              type="button"
+              :disabled="isSubmitting"
+              class="underline disabled:opacity-50"
+              @click="emit('changeDelivery')"
+            >
+              {{ t('delivery.change') }}
+            </button>
+          </div>
           <form @submit.prevent="handleSubmit" class="space-y-6 sm:space-y-8">
             <SendTypeSelector :selected-type="sendType" @update:selected-type="sendType = $event" />
 
@@ -144,6 +167,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import type { DeliverySession } from '@/types/delivery'
 import { useRouter } from 'vue-router'
 import { CloudDownloadIcon, HistoryIcon, LoaderCircleIcon, SendIcon } from 'lucide-vue-next'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -156,6 +180,11 @@ import SentRecordList from '@/components/common/SentRecordList.vue'
 import SentRecordDetailModal from '@/components/common/SentRecordDetailModal.vue'
 import { useInjectedDarkMode, useSendFlow } from '@/composables'
 
+const props = defineProps<{
+  deliverySession?: DeliverySession
+  ensureDeliveryToken?: () => Promise<string>
+}>()
+const emit = defineEmits<{ changeDelivery: []; deliverySuccess: [] }>()
 const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()
 const router = useRouter()
@@ -190,7 +219,15 @@ const {
   handleSubmit,
   toggleDrawer,
   viewDetails
-} = useSendFlow()
+} = useSendFlow(
+  props.deliverySession
+    ? {
+        getDeliverySession: () => props.deliverySession || null,
+        getDeliveryToken: props.ensureDeliveryToken,
+        onDeliverySuccess: () => emit('deliverySuccess')
+      }
+    : {}
+)
 
 const toRetrieve = () => {
   router.push('/')

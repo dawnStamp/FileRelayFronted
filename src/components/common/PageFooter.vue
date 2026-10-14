@@ -18,6 +18,19 @@
     </router-link>
     <span v-else></span>
 
+    <!-- 游客上传关闭时仍可通过寄件码进入受限上传流程。 -->
+    <router-link
+      to="/delivery"
+      class="group flex items-center gap-1.5 text-xs font-medium transition-colors sm:gap-2 sm:text-sm"
+      :class="
+        isDarkMode ? 'text-zinc-400 hover:text-zinc-100' : 'text-slate-500 hover:text-zinc-950'
+      "
+    >
+      <!-- 保留寄件入口的收件箱图标，与相邻入口的图标样式一致。 -->
+      <InboxIcon class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      {{ t('delivery.title') }}
+    </router-link>
+
     <button
       type="button"
       @click="$emit('toggle-drawer')"
@@ -34,7 +47,8 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { HistoryIcon, SendIcon } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+import { HistoryIcon, InboxIcon, SendIcon } from 'lucide-vue-next'
 
 interface Props {
   linkText?: string
@@ -49,5 +63,6 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 
+const { t } = useI18n()
 const isDarkMode = inject('isDarkMode')
 </script>

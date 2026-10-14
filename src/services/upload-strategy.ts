@@ -5,6 +5,8 @@ import { calculateFileHash } from '@/utils/file-processing'
 const CHUNK_SIZE = 5 * 1024 * 1024
 
 type ChunkedUploadOptions = {
+  // 分片策略只依赖上传接口，无需复制整个文件管理服务。
+  service?: Pick<typeof FileService, 'initChunkUpload' | 'uploadChunk' | 'completeChunkUpload'>
   expireValue: number
   expire_style: string
   onHashCalculated?: (hash: string) => void
@@ -29,11 +31,12 @@ export const uploadChunkedFile = async (
   file: File,
   options: ChunkedUploadOptions
 ): Promise<ApiResponse<ChunkedUploadResult>> => {
+  // 身份只改变请求客户端，哈希、分片、续传与合并均复用普通发送策略。
+  const service = options.service || FileService
   const fileHash = await calculateFileHash(file)
   options.onHashCalculated?.(fileHash)
 
-  const chunks = Math.ceil(file.size / CHUNK_SIZE)
-  const initResponse = await FileService.initChunkUpload({
+  const initResponse = await service.initChunkUpload({
     file_name: file.name,
     file_size: file.size,
     chunk_size: CHUNK_SIZE,
@@ -54,6 +57,7 @@ export const uploadChunkedFile = async (
     throw new Error(options.messages?.initFailed || 'Init chunk upload failed')
   }
 
+  const chunks = Math.ceil(file.size / CHUNK_SIZE)
   const uploadedChunks = new Set(initDetail.uploaded_chunks || [])
   for (let index = 0; index < chunks; index++) {
     if (uploadedChunks.has(index)) {
@@ -63,7 +67,7 @@ export const uploadChunkedFile = async (
     const start = index * CHUNK_SIZE
     const end = Math.min(start + CHUNK_SIZE, file.size)
     const chunk = file.slice(start, end)
-    const chunkResponse = await FileService.uploadChunk(
+    const chunkResponse = await service.uploadChunk(
       uploadId,
       index,
       new Blob([chunk], { type: file.type }),
@@ -84,7 +88,7 @@ export const uploadChunkedFile = async (
     uploadedChunks.add(index)
   }
 
-  const completeResponse = await FileService.completeChunkUpload(uploadId, {
+  const completeResponse = await service.completeChunkUpload(uploadId, {
     expire_value: options.expireValue,
     expire_style: options.expire_style
   })

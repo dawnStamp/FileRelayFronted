@@ -9,6 +9,8 @@ export interface FileInfo {
 }
 
 export interface FileListItem {
+  /** 迁移前的私有收件只能经管理员下载，不展示公开取件入口。 */
+  is_private?: boolean
   id: number
   code: string
   prefix: string
@@ -85,6 +87,8 @@ export type AdminFileSortBy = 'created_at' | 'expired_at' | 'name' | 'size' | 'u
 export type AdminFileSortOrder = 'asc' | 'desc'
 
 export interface AdminFileListParams {
+  // 嵌入寄件管理时由后端限定关联分享，不用前端分页结果自行过滤。
+  delivery_id?: number
   page: number
   size: number
   keyword?: string

@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue'
+import type { DeliverySession } from '@/types/delivery'
 import { useI18n } from 'vue-i18n'
 import { useAlertStore } from '@/stores/alertStore'
 import { useAdminStore } from '@/stores/adminStore'
@@ -13,12 +14,19 @@ import { buildSentRecord, isExpirationWithinLimit } from '@/utils/send-record'
 import { createSentRecordActions } from '@/utils/sent-record-actions'
 import { useSendSubmit } from './useSendSubmit'
 
-export function useSendFlow() {
+export function useSendFlow(
+  options: {
+    getDeliverySession?: () => DeliverySession | null
+    getDeliveryToken?: () => Promise<string>
+    onDeliverySuccess?: () => void
+  } = {}
+) {
   const { t } = useI18n()
   const alertStore = useAlertStore()
   const adminStore = useAdminStore()
   const configStore = useConfigStore()
   const fileDataStore = useFileDataStore()
+  // 寄件与普通发送读取同一个系统配置 Store，授权会话不再另存一套上传设置。
   const config = computed(() => configStore.config)
   const sendType = ref<SendType>('file')
   const selectedFile = ref<File | null>(null)
@@ -77,7 +85,10 @@ export function useSendFlow() {
   }
   const sentRecordActions = createSentRecordActions(notifyCopyResult)
   const { resetPresignUpload, submitFile, submitText } = useSendSubmit({
-    getMaxFileSize: () => configStore.uploadSizeLimit,
+    getMaxFileSize: () => config.value.upload_size,
+    getDeliveryToken: options.getDeliveryToken || (options.getDeliverySession
+      ? () => options.getDeliverySession?.()?.token || ''
+      : undefined),
     notify: (message, type) => alertStore.showAlert(message, type),
     translate: t,
     onProgress: (progress: UploadProgress) => {
@@ -102,6 +113,12 @@ export function useSendFlow() {
   })
 
   const checkOpenUpload = () => {
+    if (options.getDeliverySession) {
+      const session = options.getDeliverySession()
+      if (session) return true
+      alertStore.showAlert(t('delivery.tooMany'), 'error')
+      return false
+    }
     if (config.value.open_upload === 0 && !adminStore.hasToken) {
       alertStore.showAlert(t('send.messages.guestUploadDisabled'), 'error')
       return false
@@ -330,6 +347,7 @@ export function useSendFlow() {
       if (!response) return
 
       if (response?.code === 200) {
+        options.onDeliverySuccess?.()
         const newRecord = buildSentRecord({
           response,
           sendType: sendType.value,
@@ -352,7 +370,10 @@ export function useSendFlow() {
         resetUploadProgress()
         resetPresignUpload()
         selectedRecord.value = newRecord
-        await sentRecordActions.copyLink(newRecord)
+        // 自动复制可能等待后台页面的剪贴板授权；上传已完成，不能因此锁住发送按钮。
+        void sentRecordActions.copyLink(newRecord).catch(() => {
+          alertStore.showAlert(t('common.copyFailed'), 'error')
+        })
       } else {
         throw new Error(t('send.messages.serverError'))
       }

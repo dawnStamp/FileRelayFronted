@@ -93,7 +93,8 @@ import {
   HardDriveIcon,
   CogIcon,
   LayoutDashboardIcon,
-  LogOutIcon
+  LogOutIcon,
+  InboxIcon
 } from 'lucide-vue-next'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -123,6 +124,12 @@ const menuItems: MenuItem[] = [
     name: t('admin.fileManage.title'),
     icon: FolderIcon,
     redirect: ROUTES.FILE_MANAGE
+  },
+  {
+    id: ROUTE_NAMES.DELIVERY_MANAGE,
+    name: t('delivery.manage'),
+    icon: InboxIcon,
+    redirect: ROUTES.DELIVERY_MANAGE
   },
   {
     id: ROUTE_NAMES.LOCAL_SHARE,

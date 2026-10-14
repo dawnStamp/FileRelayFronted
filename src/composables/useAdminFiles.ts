@@ -31,7 +31,7 @@ import type {
   FileListItem
 } from '@/types'
 import { copyToClipboard } from '@/utils/clipboard'
-import { formatDuration, formatFileSize, formatTimestamp, getErrorMessage } from '@/utils/common'
+import { formatDuration, formatFileSize, formatTimestamp, getErrorMessage, normalizeMetadataTags, parseMetadataTags } from '@/utils/common'
 import {
   downloadAdminManagedFile,
   exportAdminTextFile,
@@ -101,7 +101,6 @@ const emptyBatchEditForm = (): AdminBatchEditForm => ({
   expired_count: null
 })
 
-const metadataTagSeparatorPattern = /[,，\n]+/
 
 const emptyDetailMetadataForm = () => ({
   note: '',
@@ -203,7 +202,8 @@ const normalizeViewPresetParams = (params: unknown): AdminFileViewPresetParams =
   }
 }
 
-export function useAdminFiles() {
+/** 寄件收件页复用文件管理时，由后端按寄件码关联关系过滤数据。 */
+export function useAdminFiles(options: { getDeliveryId?: () => number | undefined } = {}) {
   const { t } = useI18n()
   const alertStore = useAlertStore()
 
@@ -276,6 +276,7 @@ export function useAdminFiles() {
   )
 
   const requestParams = computed<AdminFileListParams>(() => ({
+    delivery_id: options.getDeliveryId?.(),
     page: params.value.page,
     size: params.value.size,
     keyword: params.value.keyword,
@@ -613,12 +614,6 @@ export function useAdminFiles() {
         displayMeta: metaParts.length > 0 ? metaParts.join(' · ') : '-'
       }
     })
-
-  const normalizeMetadataTags = (tags: string[] | undefined) =>
-    Array.isArray(tags) ? tags.map((tag) => String(tag).trim()).filter(Boolean) : []
-
-  const parseMetadataTags = (value: string) =>
-    normalizeMetadataTags(value.split(metadataTagSeparatorPattern))
 
   const formatMetadataTags = (tags: string[]) => normalizeMetadataTags(tags).join(', ')
 
