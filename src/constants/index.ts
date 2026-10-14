@@ -74,6 +74,7 @@ export const ROUTES = {
   DASHBOARD: '/admin/dashboard',
   FILE_MANAGE: '/admin/files',
   LOCAL_SHARE: '/admin/local',
+  MCP: '/admin/mcp',
   SETTINGS: '/admin/settings'
 } as const
 
@@ -87,6 +88,7 @@ export const ROUTE_NAMES = {
   DASHBOARD: 'Dashboard',
   FILE_MANAGE: 'FileManage',
   LOCAL_SHARE: 'LocalShare',
+  MCP: 'Mcp',
   SETTINGS: 'Settings'
 } as const
 

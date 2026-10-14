@@ -51,7 +51,47 @@
               {{ t('delivery.change') }}
             </button>
           </div>
-          <form @submit.prevent="handleSubmit" class="space-y-6 sm:space-y-8">
+          <div
+            v-if="guestUploadBlocked"
+            class="flex flex-col items-center gap-4 rounded-2xl border border-dashed px-6 py-10 text-center"
+            :class="
+              isDarkMode
+                ? 'border-white/15 bg-zinc-900/60 text-zinc-300'
+                : 'border-zinc-300 bg-zinc-50 text-zinc-600'
+            "
+          >
+            <span
+              class="flex h-14 w-14 items-center justify-center rounded-full"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-white shadow-sm'"
+            >
+              <LockIcon class="h-6 w-6" />
+            </span>
+            <div class="space-y-1.5">
+              <p class="text-base font-semibold">
+                {{ t('send.messages.guestUploadBlockedTitle') }}
+              </p>
+              <p
+                class="text-sm leading-relaxed"
+                :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'"
+              >
+                {{ t('send.messages.guestUploadBlockedDesc') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors"
+              :class="
+                isDarkMode
+                  ? 'bg-zinc-100 text-zinc-900 hover:bg-white'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+              "
+              @click="goLoginForUpload"
+            >
+              {{ t('send.messages.guestUploadBlockedAction') }}
+            </button>
+          </div>
+
+          <form v-else @submit.prevent="handleSubmit" class="space-y-6 sm:space-y-8">
             <SendTypeSelector :selected-type="sendType" @update:selected-type="sendType = $event" />
 
             <transition name="fade" mode="out-in">
@@ -169,7 +209,13 @@
 import { useI18n } from 'vue-i18n'
 import type { DeliverySession } from '@/types/delivery'
 import { useRouter } from 'vue-router'
-import { CloudDownloadIcon, HistoryIcon, LoaderCircleIcon, SendIcon } from 'lucide-vue-next'
+import {
+  CloudDownloadIcon,
+  HistoryIcon,
+  LoaderCircleIcon,
+  LockIcon,
+  SendIcon
+} from 'lucide-vue-next'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SendTypeSelector from '@/components/common/SendTypeSelector.vue'
 import FileUploadArea from '@/components/common/FileUploadArea.vue'
@@ -179,6 +225,7 @@ import SideDrawer from '@/components/common/SideDrawer.vue'
 import SentRecordList from '@/components/common/SentRecordList.vue'
 import SentRecordDetailModal from '@/components/common/SentRecordDetailModal.vue'
 import { useInjectedDarkMode, useSendFlow } from '@/composables'
+import { ROUTES } from '@/constants'
 
 const props = defineProps<{
   deliverySession?: DeliverySession
@@ -189,6 +236,7 @@ const isDarkMode = useInjectedDarkMode()
 const { t } = useI18n()
 const router = useRouter()
 const {
+  guestUploadBlocked,
   sendType,
   selectedFile,
   selectedFiles,
@@ -228,6 +276,10 @@ const {
       }
     : {}
 )
+
+const goLoginForUpload = () => {
+  router.push({ path: ROUTES.LOGIN, query: { redirect: ROUTES.SEND } })
+}
 
 const toRetrieve = () => {
   router.push('/')

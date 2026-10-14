@@ -69,11 +69,7 @@
                 v-if="isPreviewable(record)"
                 type="button"
                 class="rounded-xl px-4 py-2 text-sm font-semibold transition duration-300"
-                :class="
-                  isDarkMode
-                    ? 'bg-zinc-200 text-zinc-950 hover:bg-zinc-100'
-                    : 'bg-zinc-800 text-white hover:bg-zinc-900'
-                "
+                :class="isDarkMode ? 'bg-zinc-200 text-zinc-950 hover:bg-zinc-100' : 'bg-zinc-800 text-white hover:bg-zinc-900'"
                 @click="$emit('preview-file')"
               >
                 {{ t('fileRecord.preview') }}
@@ -154,6 +150,7 @@ const getDownloadUrl = (record: ReceivedFileRecord) => {
   return buildDownloadUrl(record.downloadUrl)
 }
 
+
 const getQRCodeValue = (record: ReceivedFileRecord) => {
   return buildReceivedRecordQrValue(record)
 }
@@ -178,7 +175,7 @@ const isPreviewable = (record: ReceivedFileRecord) => {
     'wav',
     'm4a',
     'flac',
-    'pdf'
+    'pdf',
   ].includes(extension)
 }
 </script>

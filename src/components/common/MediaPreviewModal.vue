@@ -18,7 +18,7 @@
           </h3>
           <div class="flex items-center gap-2">
             <a
-              :href="previewUrl"
+              :href="downloadUrl"
               target="_blank"
               rel="noopener noreferrer"
               class="rounded-xl px-3 py-1.5 text-sm font-semibold transition duration-300"
@@ -70,6 +70,8 @@
           <iframe
             v-else
             :src="previewUrl"
+            sandbox=""
+            referrerpolicy="no-referrer"
             class="h-[70vh] w-full border-0"
             :title="record.filename"
           ></iframe>
@@ -100,10 +102,11 @@ defineEmits<{
 const { t } = useI18n()
 const isDarkMode = useInjectedDarkMode()
 
-const previewUrl = computed(() =>
+const extension = computed(() => props.record?.filename.split('.').pop()?.toLowerCase() || '')
+const downloadUrl = computed(() =>
   props.record?.downloadUrl ? buildDownloadUrl(props.record.downloadUrl) : ''
 )
-const extension = computed(() => props.record?.filename.split('.').pop()?.toLowerCase() || '')
+const previewUrl = computed(() => downloadUrl.value)
 const mediaType = computed(() => {
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(extension.value)) return 'image'
   if (['mp4', 'webm', 'ogg', 'mov', 'm4v'].includes(extension.value)) return 'video'

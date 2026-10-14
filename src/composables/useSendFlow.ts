@@ -86,9 +86,9 @@ export function useSendFlow(
   const sentRecordActions = createSentRecordActions(notifyCopyResult)
   const { resetPresignUpload, submitFile, submitText } = useSendSubmit({
     getMaxFileSize: () => config.value.upload_size,
-    getDeliveryToken: options.getDeliveryToken || (options.getDeliverySession
-      ? () => options.getDeliverySession?.()?.token || ''
-      : undefined),
+    getDeliveryToken:
+      options.getDeliveryToken ||
+      (options.getDeliverySession ? () => options.getDeliverySession?.()?.token || '' : undefined),
     notify: (message, type) => alertStore.showAlert(message, type),
     translate: t,
     onProgress: (progress: UploadProgress) => {
@@ -111,6 +111,13 @@ export function useSendFlow(
       fileHash.value = hash
     }
   })
+
+  // 游客上传关闭且未登录：整页引导登录（发送页在选文件前就展示状态，
+  // 避免用户选完文件点上传才收到 403 提示）。后端 403 兜底始终保留。
+  const guestUploadBlocked = computed(
+    // 已验证的寄件授权允许在关闭游客上传时继续投递。
+    () => !options.getDeliverySession?.() && config.value.open_upload === 0 && !adminStore.hasToken
+  )
 
   const checkOpenUpload = () => {
     if (options.getDeliverySession) {
@@ -406,6 +413,7 @@ export function useSendFlow(
 
   return {
     config,
+    guestUploadBlocked,
     sendType,
     selectedFile,
     selectedFiles,
