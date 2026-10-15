@@ -102,8 +102,10 @@ import {
   CopyIcon,
   FileTextIcon,
   NetworkIcon,
+  PlusIcon,
   RefreshCwIcon,
   SparklesIcon,
+  TrashIcon,
   UploadIcon
 } from 'lucide-vue-next'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -139,6 +141,19 @@ const tools = [
     title: 'admin.mcp.shareFileTitle',
     description: 'admin.mcp.shareFileHelp',
     icon: UploadIcon
+  },
+  // 管理工具始终要求管理员 Token，与普通上传的免认证开关分开说明。
+  {
+    name: 'create_delivery_code',
+    title: 'admin.mcp.createDeliveryTitle',
+    description: 'admin.mcp.createDeliveryHelp',
+    icon: PlusIcon
+  },
+  {
+    name: 'delete_delivery_code',
+    title: 'admin.mcp.deleteDeliveryTitle',
+    description: 'admin.mcp.deleteDeliveryHelp',
+    icon: TrashIcon
   }
 ]
 
